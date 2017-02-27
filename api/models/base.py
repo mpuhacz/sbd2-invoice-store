@@ -63,35 +63,46 @@ class Model(metaclass=ModelMeta):
     _pk = 'id'
     _db_table = ''
 
-    def __init__(self, *args):
+    def __init__(self, *args, in_db=False):
+        self.in_db = in_db
         if len(args) == 1:
-            args = self.get_by_pk(args[0])
+            obj = self.get_by_pk(args[0])
+            self.__dict__.update(obj.__dict__)
 
-        if len(args) != len(self._fields):
+        elif len(args) != len(self._fields):
             raise Exception('Not enought arguments to initialize model.')
-
-        for idx, (key, field) in enumerate(self._fields.items()):
-            setattr(self, key, field.to_internal(args[idx]))
+        else:
+            for idx, (key, field) in enumerate(self._fields.items()):
+                setattr(self, key, field.to_internal(args[idx]))
 
     def __repr__(self):
         r = ['{}={}'.format(k, getattr(self, k)) for k in self._fields.keys()]
         return '<{} model: {}>'.format(self.__class__.__name__, ', '.join(r))
 
     @classmethod
-    def get_by_pk(cls, pk):
-        obj = cls._db.execute('SELECT * from {} WHERE {} = ?'.format(
-            cls._db_table, cls._pk), pk).fetchone()
-        if not obj:
-            raise DoesNotExists('Object not found')
-        return obj
-
-    @classmethod
-    def many(cls, filters=None, limit=1000):
+    def _create_query(cls, filters=None):
         args = ['SELECT * from {}'.format(cls._db_table)]
         if filters:
             args[0] += ' WHERE ' + str(filters)
             args += filters.values
-        return tuple(cls(*i) for i in cls._db.execute(*args).fetchall())
+        return args
+
+    @classmethod
+    def get(cls, filters=None):
+        args = cls._create_query(filters)
+        obj = cls._db().execute(*args).fetchone()
+        if not obj:
+            raise DoesNotExists('Object not found')
+        return cls(*obj, in_db=True)
+
+    @classmethod
+    def get_by_pk(cls, pk):
+        return cls.get(Filter(**{cls._pk: pk}))
+
+    @classmethod
+    def many(cls, filters=None):
+        args = cls._create_query(filters)
+        return tuple(cls(*i, in_db=True) for i in cls._db().execute(*args).fetchall())
 
     @classmethod
     def create(cls, **kwargs):

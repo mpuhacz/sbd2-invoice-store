@@ -5,7 +5,7 @@ import falcon
 from api import settings
 
 
-class InvoicesResource(object):
+class InvoicesResource:
 
     def __init__(self, db):
         self.db = db
