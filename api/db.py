@@ -1,10 +1,28 @@
+from contextlib import contextmanager
+import sys
+
 import pyodbc
 
 import settings
 
-cnxn = pyodbc.connect(settings.DSN)
-cnxn.setdecoding(pyodbc.SQL_WCHAR, encoding='utf-8')
-cnxn.setencoding(encoding='utf-8')
-cursor = cnxn.cursor
+
+@contextmanager
+def open_db_connection(commit=True):
+    connection = pyodbc.connect(settings.DSN)
+    cursor = connection.cursor()
+    try:
+        yield cursor
+    except pyodbc.DatabaseError as err:
+        error, = err.args
+        sys.stderr.write(error.message)
+        cursor.execute("ROLLBACK")
+        raise err
+    else:
+        if commit:
+            cursor.execute("COMMIT")
+        else:
+            cursor.execute("ROLLBACK")
+    finally:
+        connection.close()
 
 

@@ -8,7 +8,7 @@ from models.models import User
 from .base import DefaultResource
 
 
-class LoginResource(DefaultResource):
+class LoginResource:
 
     def on_post(self, req, resp):
         username = req.get_param('username', required=True)

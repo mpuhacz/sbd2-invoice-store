@@ -2,6 +2,9 @@ import json
 
 import falcon
 
+from models.serializers import serialize
+
+
 
 class RequireJSON(object):
 
@@ -47,6 +50,6 @@ class JSONTranslator(object):
         if 'result' not in req.context:
             return
 
-        resp.body = json.dumps(req.context['result'])
+        resp.body = serialize(req.context['result'])
         print(resp.body)
 
