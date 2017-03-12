@@ -98,7 +98,6 @@ class Model(metaclass=ModelMeta):
 
     @classmethod
     def execute(cls, *args, fetchone=False, fetchall=False):
-        print(args)
         with open_db_connection() as cursor:
             result = cursor.execute(*args)
             if fetchall:
@@ -154,6 +153,7 @@ class Model(metaclass=ModelMeta):
         for key in include:
             if key in self._fields:
                 result[key] = self._fields[key].to_external(getattr(self, key), as_object)
+
         return result if not flat else list(result.values())
 
     @property

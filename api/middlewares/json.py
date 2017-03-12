@@ -5,7 +5,6 @@ import falcon
 from models.serializers import serialize
 
 
-
 class RequireJSON(object):
 
     def process_request(self, req, resp):
@@ -52,4 +51,3 @@ class JSONTranslator(object):
 
         resp.body = serialize(req.context['result'])
         print(resp.body)
-
